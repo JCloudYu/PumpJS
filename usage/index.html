@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Test Page</title>
+	<script type="application/javascript" src="https://api.purimize.com/cache/lib/js/jquery,moment"></script>
+	<script type="application/javascript" src="http://momentjs.com/downloads/moment-timezone-with-data.js"></script>
+	<script type="application/javascript" src="../pump.js"></script>
+	<script type="application/javascript" src="./source.js"></script>
+	<script type="application/javascript" src="./clock.js"></script>
+</head>
+<body style="padding:0;margin:0;width:100vw;height:100vh;">
+	<div id="viewport" style="width:100vw;height:100vh;"></div>
+	<div id="animateSource"></div>
+	<script>
+		var zones = [
+			"UTC", "Asia/Taipei", "Asia/Tokyo", "Australia/Sydney", "America/New_York", "America/Los_Angeles"
+		];
+
+		zones.forEach(function( zone ){ addClock( zone ); });
+
+		pump.fireTarget( 'time-source-controller', 'SOURCE START' );
+	</script>
+</body>
+</html>
