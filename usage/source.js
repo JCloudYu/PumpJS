@@ -1,7 +1,7 @@
 (function() {
 	var
 	currTime	= moment(),
-	intervalId	= undefined,
+	timeoutId	= undefined,
 	kernel		= pump.instantiate( 'time-source-controller', function(){
 		return {
 			// Used to identify the object retrieved by pump.instance()
@@ -18,15 +18,19 @@
 		// This event can be fired externally ( source is null )
 		if ( !!e.source ) return;
 
-		intervalId = setInterval(function(){
-			currTime = moment();
-			kernel.fire( 'TIME SYNC' );
-		}, 100);
+		timeoutId = setTimeout(___UpdateTime);
 	})
 	.on( 'SOURCE STOP', function(){
 		// This event can be fired externally ( source is null )
-		if ( !intervalId || !!e.source ) return;
+		if ( !timeoutId || !!e.source ) return;
 
-		clearInterval( intervalId );
+		clearTimeout( timeoutId );
 	});
+
+	function ___UpdateTime(){
+		currTime = moment();
+		kernel.fire( 'SOURCE SYNC' );
+
+		timeoutId = setTimeout(___UpdateTime, 500);
+	}
 })();
