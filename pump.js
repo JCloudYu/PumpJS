@@ -261,6 +261,6 @@
 		___ACCESS_POINT[ key ] = ___DEFAULT_PUMP[ key ];
 	}
 
-	window.pump = window._$p = ___ACCESS_POINT;
+	window.pump = ___ACCESS_POINT;
 
 })( window );
