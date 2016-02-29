@@ -1,6 +1,3 @@
-/**
- * Created by JCloudYu on 01/11/16.
- */
 (function( window ) {
 	"use strict";
 
