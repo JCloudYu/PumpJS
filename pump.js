@@ -48,7 +48,7 @@
 		};
 	})(),
 	___DO_NOTHING	 = function(){},
-	___PUMP_FACTORY	 = function(){
+	___PUMP_FACTORY	 = function( injectTarget ){
 
 		var
 		__instMap	= {},
@@ -225,29 +225,33 @@
 		};
 
 
-
-		return {
-			instantiate: __INSTANTIATOR,
-			fire: function( eventType, args, async ) {
-				async = async || false;
-				__fireEvent( null, null, eventType, args, async );
-				return this;
-			},
-			fireTarget: function( target, eventType, args, async ){
-				async = async || false;
-				__fireEvent( null, target, eventType, args, async );
-				return this;
-			},
-			instance: function( targetId ){
-				var inst = __getInstance( targetId );
-				return (!inst) ? null : inst._interface;
-			}
+		injectTarget = injectTarget || {};
+		injectTarget.instantiate = __INSTANTIATOR;
+		injectTarget.fire = function( eventType, args, async ) {
+			async = async || false;
+			__fireEvent( null, null, eventType, args, async );
+			return this;
 		};
+		injectTarget.fireTarget = function( target, eventType, args, async ){
+			async = async || false;
+			__fireEvent( null, target, eventType, args, async );
+			return this;
+		};
+		injectTarget.instance = function( targetId ){
+			var inst = __getInstance( targetId );
+			return (!inst) ? null : inst._interface;
+		};
+
+		return injectTarget;
 	},
 	___DEFAULT_PUMP	 = ___PUMP_FACTORY(),
 	___ORIGINAL_PUMP = window.pump || undefined,
 	___ACCESS_POINT	 = function(){
-		return ( this instanceof ___ACCESS_POINT ) ? ___PUMP_FACTORY() : ___DEFAULT_PUMP;
+
+		if ( !(this instanceof ___ACCESS_POINT) )
+			return ___DEFAULT_PUMP;
+
+		___PUMP_FACTORY( this );
 	};
 
 
