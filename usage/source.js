@@ -18,9 +18,9 @@
 		// This event can be fired externally ( source is null )
 		if ( !!e.source ) return;
 
-		timeoutId = setTimeout(___UpdateTime);
+		timeoutId = setTimeout( ___UpdateTime, 0 );
 	})
-	.on( 'SOURCE STOP', function(){
+	.on( 'SOURCE STOP', function( e ){
 		// This event can be fired externally ( source is null )
 		if ( !timeoutId || !!e.source ) return;
 
