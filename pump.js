@@ -1,7 +1,12 @@
-(function( window ) {
+(function() {
 	"use strict";
 
+
+
 	var
+	___isNode = (new Function( "try{return this===global}catch(e){return false}" ))(),
+
+
 	// INFO: Global ID System
 	___ID_CANDIDATES = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
 	___CANDIDATE_LEN = ___ID_CANDIDATES.length,
@@ -242,7 +247,6 @@
 		return injectTarget;
 	},
 	___DEFAULT_PUMP	 = ___PUMP_FACTORY(),
-	___ORIGINAL_PUMP = window.pump || undefined,
 	___ACCESS_POINT	 = function(){
 
 		if ( !(this instanceof ___ACCESS_POINT) )
@@ -251,17 +255,25 @@
 		___PUMP_FACTORY( this );
 	};
 
-
-	___ACCESS_POINT.prevPump = function(){
-		return ___ORIGINAL_PUMP;
-	};
-
 	for( var key in ___DEFAULT_PUMP )
 	{
 		if ( !___DEFAULT_PUMP.hasOwnProperty( key ) ) continue;
 		___ACCESS_POINT[ key ] = ___DEFAULT_PUMP[ key ];
 	}
 
-	window.pump = ___ACCESS_POINT;
 
-})( window );
+
+
+	if ( ___isNode )
+		module.exports = ___ACCESS_POINT;
+	else
+	{
+		___ACCESS_POINT.prevPump = (function( pump ){
+			return function(){ return pump; };
+		})( window.pump || undefined );
+
+		window.pump = ___ACCESS_POINT;
+	}
+
+
+})();
