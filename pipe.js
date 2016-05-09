@@ -12,12 +12,15 @@
 
 
 		dependencies.forEach(function( item ){
-			if ( typeof item !== 'function' ) {
+			if ( typeof item === 'string' ) {
 				__promises.push( ___LOAD_RESOURCE( item, 'js' ) );
 				return;
 			}
 
-			__chainHead = __chainHead.then(Promise.all(__promises)).then(item);
+			if ( typeof item === 'function' ) {
+				__chainHead = __chainHead.then(Promise.all(__promises)).then(item);
+			}
+
 			__promises = [];
 		});
 
