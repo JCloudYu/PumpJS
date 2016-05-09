@@ -17,11 +17,13 @@
 				return;
 			}
 
-			if ( typeof item === 'function' ) {
-				__chainHead = __chainHead.then(Promise.all(__promises)).then(item);
-			}
-
+			__chainHead = __chainHead.then(Promise.all(__promises));
 			__promises = [];
+
+
+			if ( typeof item === 'function' ) {
+				__chainHead = __chainHead.then(item);
+			}
 		});
 
 
