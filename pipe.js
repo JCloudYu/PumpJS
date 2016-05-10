@@ -22,7 +22,7 @@
 
 
 			if ( typeof item === 'function' ) {
-				__chainHead = __chainHead.then(function(){ setTimeout( item, 0 ); });
+				__chainHead = __chainHead.then(item);
 			}
 		});
 
