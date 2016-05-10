@@ -77,36 +77,48 @@
 
 			$.getJSON( modulePath + 'component.json', function( descriptor ){
 				var
-				views	 = [], scripts = [], styles = [],
+				scripts = [], styles = [],
 				comps	 = descriptor[ 'components' ] || [],
-				promises = [],
-				target	 = anchor || $( 'body' ),
-				targetOp = anchor ? target.before : target.prepend;
+				promises = [];
 
 
 
 				comps.forEach(function( comp ){
-					if ( comp['view'] )	  views.push( modulePath + comp['view'] );
-					if ( comp['script'] ) scripts.push( modulePath + comp['script'] );
-					if ( comp['style'] )  styles.push( modulePath + comp['style'] );
-				});
+					var fPath,
+					targetAnchor = !!comp['anchor'] ? $(comp['anchor']) : anchor,
+					target		 = targetAnchor || $( 'body' ),
+					targetOp	 = targetAnchor ? target.before : target.prepend;
 
+					if ( comp['style'] )
+					{
+						fPath = modulePath + comp['style'];
+						if ( $.inArray( fPath, styles ) < 0 )
+						{
+							promises.push( ___LOAD_RESOURCE( fPath, 'css', targetAnchor ) );
+							styles.push( fPath );
+						}
+					}
 
+					if ( comp['view'] )
+					{
+						promises.push(new Promise(function(complete, failure){
+							$.get( modulePath + comp['view'], function( htmlText ){
+								$( htmlText ).each(function(idx, tag){ targetOp.call( target, tag ); });
 
-				$.unique(scripts).forEach(function( scriptPath ){
-					promises.push( ___LOAD_RESOURCE( scriptPath, 'js', anchor ) );
-				});
-				$.unique(views).forEach(function( viewPath ){
-					promises.push(new Promise(function(complete, failure){
-						$.get( viewPath, function( htmlText ){
-							$( htmlText ).each(function(idx, tag){ targetOp.call( target, tag ); });
+								complete();
+							}, 'text').fail(failure);
+						}));
+					}
 
-							complete();
-						}, 'text').fail(failure);
-					}));
-				});
-				$.unique(styles).forEach(function( stylePath ){
-					promises.push( ___LOAD_RESOURCE( stylePath, 'css', anchor ) );
+					if ( comp['script'] )
+					{
+						fPath = modulePath + comp['script'];
+						if ( $.inArray( fPath, scripts ) < 0 )
+						{
+							promises.push( ___LOAD_RESOURCE( fPath, 'js', targetAnchor ) );
+							scripts.push( fPath );
+						}
+					}
 				});
 
 
