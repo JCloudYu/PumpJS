@@ -66,11 +66,14 @@
 
 
 	function ___LOAD_COMPONENT( componentName, basePath, anchor ) {
-		return new Promise(function( fulfill, reject ){
-			basePath = basePath || './components';
-			anchor	 = (arguments.length > 2) ? $( anchor ) : null;
 
-			var modulePath = basePath + '/' + componentName + '/';
+		basePath = basePath || './components';
+		anchor	 = (arguments.length > 2) ? $( anchor ) : null;
+
+		return new Promise(function( fulfill, reject ){
+
+			var
+			modulePath = basePath + '/' + componentName + '/';
 
 			$.getJSON( modulePath + 'component.json', function( descriptor ){
 				var
@@ -78,7 +81,7 @@
 				comps	 = descriptor[ 'components' ] || [],
 				promises = [],
 				target	 = anchor || $( 'body' ),
-				targetOp = anchor ? target.after : target.append;
+				targetOp = anchor ? target.before : target.prepend;
 
 
 
