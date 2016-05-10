@@ -43,15 +43,16 @@
 
 			var __promises = [];
 			components.forEach(function( item ){
-				var arguments = [];
+
+				var args = [];
 
 				if ( typeof item === "string" )
-					arguments.push( item );
+					args.push( item );
 				else
-					arguments.push( item.name, item.basePath || __compBasePath, item.anchor );
+					args.push( item.name, item.basePath || __compBasePath, item.anchor );
 
 
-				__promises.push( ___LOAD_COMPONENT.apply( null, arguments ) );
+				__promises.push( ___LOAD_COMPONENT.apply( null, args ) );
 			});
 
 			return Promise.all( __promises );
