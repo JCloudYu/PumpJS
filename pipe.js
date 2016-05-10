@@ -17,14 +17,17 @@
 				return;
 			}
 
-			__chainHead = __chainHead.then(Promise.all(__promises));
+			__chainHead = __chainHead.then(___PROMISE_ALL(__promises));
 			__promises = [];
 
 
 			if ( typeof item === 'function' ) {
-				__chainHead = __chainHead.then(item);
+				__chainHead = __chainHead.then(function(){ setTimeout( item, 0 ); });
 			}
 		});
+
+		if ( __promises.length > 0 )
+			__chainHead = __chainHead.then(___PROMISE_ALL(__promises));
 
 
 
@@ -63,5 +66,8 @@
 
 			(document.getElementsByTagName('body')[0]).insertBefore( tag, null );
 		});
+	}
+	function ___PROMISE_ALL( promises ) {
+		return function(){ return Promise.all( promises ); };
 	}
 })();
