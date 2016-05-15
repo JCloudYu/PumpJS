@@ -43,5 +43,7 @@
 
 			obj1[ prop ] = obj2[ prop ];
 		}
+
+		return obj1;
 	}
 })();
