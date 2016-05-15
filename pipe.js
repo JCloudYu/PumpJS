@@ -68,7 +68,7 @@
 	function ___LOAD_COMPONENT( componentName, basePath, anchor ) {
 
 		basePath = basePath || './components';
-		anchor	 = (arguments.length > 2) ? $( anchor ) : null;
+		anchor	 = anchor ? $( anchor ) : null;
 
 		return new Promise(function( fulfill, reject ){
 
