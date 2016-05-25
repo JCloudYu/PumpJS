@@ -6,19 +6,19 @@
 		if ( !Array.isArray( dependencies ) ) return false;
 
 		var __trigger,
-		__promises	= [],
+		__resources = [],
 		__chainHead = new Promise(function( fulfill ){ __trigger = fulfill; });
 
 
 
 		dependencies.forEach(function( item ){
 			if ( typeof item === 'string' ) {
-				__promises.push( ___LOAD_RESOURCE( item, 'js' ) );
+				__resources.push( item );
 				return;
 			}
 
-			__chainHead = __chainHead.then(___PROMISE_ALL(__promises));
-			__promises = [];
+			__chainHead = __chainHead.then(___RESOURCE_FETCHER( __resources ));
+			__resources = [];
 
 
 			if ( typeof item === 'function' ) {
@@ -26,8 +26,8 @@
 			}
 		});
 
-		if ( __promises.length > 0 )
-			__chainHead = __chainHead.then(___PROMISE_ALL(__promises));
+		if ( __resources.length > 0 )
+			__chainHead = __chainHead.then(___RESOURCE_FETCHER(__resources));
 
 
 
@@ -176,7 +176,12 @@
 				target.insertBefore( tag, anchor );
 		});
 	}
-	function ___PROMISE_ALL( promises ) {
-		return function(){ return Promise.all( promises ); };
+
+	function ___RESOURCE_FETCHER( resList ) {
+		return function(){
+			var __promises	= [];
+			resList.forEach(function( item ){ __promises.push( ___LOAD_RESOURCE( item, 'js' ) ); });
+			return Promise.all( __promises );
+		};
 	}
 })();
