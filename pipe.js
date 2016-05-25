@@ -115,7 +115,7 @@
 						fPath = modulePath + comp['script'];
 						if ( $.inArray( fPath, scripts ) < 0 )
 						{
-							promises.push( ___LOAD_RESOURCE( fPath, 'js', targetAnchor ) );
+							promises.push( ___LOAD_RESOURCE( fPath, 'js', targetAnchor, true ) );
 							scripts.push( fPath );
 						}
 					}
@@ -130,9 +130,8 @@
 			}).fail( reject );
 		});
 	}
-	function ___LOAD_RESOURCE( src, type, anchor ) {
+	function ___LOAD_RESOURCE( src, type, anchor, late ) {
 		return new Promise(function( fulfill, reject ) {
-
 			var tag, target;
 
 			switch ( type )
@@ -171,7 +170,10 @@
 				target	 = $( 'body' )[0];
 			}
 
-			target.insertBefore( tag, anchor );
+			if ( late )
+				setTimeout(function(){ target.insertBefore( tag, anchor ); }, 0);
+			else
+				target.insertBefore( tag, anchor );
 		});
 	}
 	function ___PROMISE_ALL( promises ) {
