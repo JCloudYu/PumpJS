@@ -2,39 +2,18 @@
  * Created by JCloudYu on 5/10/16.
  */
 (function() {
-	window.pipe = window.pipe || function( dependencies ){
-		if ( !Array.isArray( dependencies ) ) return false;
+	// Pipe core
+	(function(){
+		window.pipe = window.pipe || function( dependencies ){
+			if ( !Array.isArray( dependencies ) ) return false;
 
-		var __trigger,
-		__resources = [],
-		__chainHead = new Promise(function( fulfill ){ __trigger = fulfill; });
+			var __chainHead = ___CREATE_PIPE( dependencies, true );
+			__chainHead.pipe = ___CREATE_PIPE_CHAIN( __chainHead );
+			return __chainHead;
+		};
+	})();
 
-
-
-		dependencies.forEach(function( item ){
-			if ( typeof item === 'string' ) {
-				__resources.push( item );
-				return;
-			}
-
-			__chainHead = __chainHead.then(___RESOURCE_FETCHER( __resources ));
-			__resources = [];
-
-
-			if ( typeof item === 'function' ) {
-				__chainHead = __chainHead.then(item);
-			}
-		});
-
-		if ( __resources.length > 0 )
-			__chainHead = __chainHead.then(___RESOURCE_FETCHER(__resources));
-
-
-
-		setTimeout(__trigger, 0);
-		return __chainHead;
-	};
-
+	// pipe.components
 	(function(){
 		var __compBasePath = './components';
 
@@ -176,12 +155,58 @@
 				target.insertBefore( tag, anchor );
 		});
 	}
-
 	function ___RESOURCE_FETCHER( resList ) {
 		return function(){
 			var __promises	= [];
 			resList.forEach(function( item ){ __promises.push( ___LOAD_RESOURCE( item, 'js' ) ); });
 			return Promise.all( __promises );
 		};
+	}
+	function ___CREATE_PIPE_CHAIN( prevChain ) {
+		return function( dependencies ) {
+			if ( !Array.isArray( dependencies ) ) return false;
+			var newChain = prevChain.then(___CREATE_PIPE( dependencies, false ));
+			newChain.pipe = ___CREATE_PIPE_CHAIN( newChain );
+			return newChain;
+		};
+	}
+	function ___CREATE_PIPE( dependencies, immediate ) {
+
+		var __trigger,
+		__resources = [],
+		__chainHead = new Promise(function( fulfill ){ __trigger = fulfill; });
+
+
+
+		dependencies.forEach(function( item ) {
+			if ( typeof item === 'string' ) {
+				__resources.push( item );
+				return;
+			}
+
+			__chainHead = __chainHead.then(___RESOURCE_FETCHER( __resources ));
+			__resources = [];
+
+
+			if ( typeof item === 'function' ) {
+				__chainHead = __chainHead.then(item);
+			}
+		});
+
+		if ( __resources.length > 0 )
+			__chainHead = __chainHead.then(___RESOURCE_FETCHER(__resources));
+
+
+		
+		if ( !immediate )
+		{
+			return function(){
+				setTimeout(__trigger, 0);
+				return __chainHead;
+			};
+		}
+
+		setTimeout(__trigger, 0);
+		return __chainHead;
 	}
 })();
