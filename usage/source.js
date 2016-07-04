@@ -1,36 +1,55 @@
 (function() {
-	var
-	currTime	= moment(),
-	timeoutId	= undefined,
-	kernel		= pump.instantiate( 'time-source-controller', function(){
-		return {
-			// Used to identify the object retrieved by pump.instance()
-			sourceKey: ( Math.random() * 100 ) | 0,
-			getCurrentTime:function(){
-				return currTime;
-			}
+	var currTime, timeoutId ,kernel;
+
+	pipe([
+		'https://api.purimize.com/cache/lib/js/jquery,moment,moment-timezone-small'
+	])
+	.pipe([
+//		'./base64-large-file.js',
+		'../util/misc.js',
+		function(){
+			currTime	= moment();
+			timeoutId	= undefined;
+			kernel		= pump.instantiate( 'time-source-controller', function(){
+				return {
+					// Used to identify the object retrieved by pump.instance()
+					sourceKey: ( Math.random() * 100 ) | 0,
+					getCurrentTime:function(){
+						return currTime;
+					}
+				}
+			});
 		}
-	});
-
-
-	kernel
-	.on( 'SOURCE START', function( e ){
-		// This event can be fired externally ( source is null )
-		if ( !!e.source ) return;
-
-		timeoutId = setTimeout( ___UpdateTime, 0 );
+	])
+	.pipe([
+		'./clock.js'
+	])
+	.then(function(){
+		addClock( 'Asia/Taipei' );
 	})
-	.on( 'SOURCE STOP', function( e ){
-		// This event can be fired externally ( source is null )
-		if ( !timeoutId || !!e.source ) return;
+	.then(function(){
+		kernel
+		.on( 'SOURCE START', function( e ){
+			// This event can be fired externally ( source is null )
+			if ( !!e.source ) return;
 
-		clearTimeout( timeoutId );
+			timeoutId = setTimeout( ___UpdateTime, 0 );
+		})
+		.on( 'SOURCE STOP', function( e ){
+			// This event can be fired externally ( source is null )
+			if ( !timeoutId || !!e.source ) return;
+
+			clearTimeout( timeoutId );
+		});
+
+		function ___UpdateTime(){
+			currTime = moment();
+			kernel.fire( 'SOURCE SYNC' );
+
+			timeoutId = setTimeout(___UpdateTime, 500);
+		}
+	})
+	.then(function(){
+		pump.fire( 'SOURCE START' );
 	});
-
-	function ___UpdateTime(){
-		currTime = moment();
-		kernel.fire( 'SOURCE SYNC' );
-
-		timeoutId = setTimeout(___UpdateTime, 500);
-	}
 })();
