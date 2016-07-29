@@ -2,6 +2,8 @@
 	"use strict";
 
 	var
+	___PLAIN_OBJ	= {},
+	___CORE_TO_STR	= ___PLAIN_OBJ.toString,
 	___UNIQUE_ID = (function(){
 		var hexStr = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' ];
 		return function( base, time, seq, rand ) {
@@ -53,16 +55,24 @@
 		overwrite	= arguments.length > 2 ? !!overwrite : false;
 		iterated	= arguments.length > 3 ? !!iterated : true;
 
-		var prop, isObj1, isObj2;
+		var prop, isObj1, isObj2, isAry1, isAry2, isFunc1, isFunc2;
 
 		for( prop in obj2 )
 		{
 			if ( !obj2.hasOwnProperty( prop ) ) continue;
+			isAry2 = Array.isArray(obj2[prop]);
+			isFunc2 = ___CORE_TO_STR.call(obj2[prop]) === '[object Function]';
+			
 
 			if ( obj1.hasOwnProperty( prop ) )
 			{
-				isObj1 = (obj1[prop] === Object(obj1[prop]));
-				isObj2 = (obj2[prop] === Object(obj2[prop]));
+				isAry1 = Array.isArray(obj1[prop]);
+				isFunc1 = ___CORE_TO_STR.call(obj1[prop]) === '[object Function]';
+				
+			
+			
+				isObj1 = ((obj1[prop] === Object(obj1[prop])) && !isAry1 && !isFunc1 );
+				isObj2 = ((obj2[prop] === Object(obj2[prop])) && !isAry2 && !isFunc2 );
 
 				if ( isObj1 && isObj2 && iterated )
 				{
@@ -75,7 +85,8 @@
 				if ( !overwrite ) continue;
 			}
 
-			obj1[ prop ] = obj2[ prop ];
+			
+			obj1[ prop ] = !isAry2 ? obj2[ prop ] : obj2[ prop ].slice();
 		}
 
 		return obj1;
