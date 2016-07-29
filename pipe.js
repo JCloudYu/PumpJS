@@ -146,7 +146,7 @@
 			else
 			{
 				anchor	 = null;
-				target	 = $( 'body' )[0];
+				target	 = $( type == "js" ? 'body' : 'head' )[0];
 			}
 
 			if ( late )
@@ -158,7 +158,23 @@
 	function ___RESOURCE_FETCHER( resList ) {
 		return function(){
 			var __promises	= [];
-			resList.forEach(function( item ){ __promises.push( ___LOAD_RESOURCE( item, 'js' ) ); });
+			resList.forEach(function( item ) {
+				var itemAddr, itemType;
+				
+				if ( item === Object(item) )
+				{
+					if ( !item.path ) return;
+					
+					itemAddr = item.path;
+					itemType = item.type || 'js';
+				}
+				else
+				{
+					itemAddr = item;
+					itemType = 'js';
+				}
+				__promises.push( ___LOAD_RESOURCE( itemAddr, itemType ) );
+			});
 			return Promise.all( __promises );
 		};
 	}
@@ -180,6 +196,13 @@
 
 		dependencies.forEach(function( item ) {
 			if ( typeof item === 'string' ) {
+				__resources.push( item );
+				return;
+			}
+			
+			// INFO: Pure object
+			if ( (item === Object(item)) && !Array.isArray(item) && ( typeof item !== 'function' ) && item.path )
+			{
 				__resources.push( item );
 				return;
 			}

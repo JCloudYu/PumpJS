@@ -7,6 +7,8 @@
 	.pipe([
 //		'./base64-large-file.js',
 		'../util/misc.js',
+		{ path:'./test.css', type:'css' }, // CSS mode
+		{  },	// Will be an anchor ( Not a valid document descriptor )
 		function(){
 			currTime	= moment();
 			timeoutId	= undefined;
