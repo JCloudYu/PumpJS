@@ -54,39 +54,59 @@
 			var
 			modulePath = basePath + '/' + componentName + '/';
 
-			$.getJSON( modulePath + 'component.json', function( descriptor ){
-				var
+			$.getJSON( modulePath + 'component.json?' + (((new Date()).getTime() / 1000) | 0), function( descriptor ) {
+				var trigger, promiseGenerator,
 				scripts = [], styles = [],
 				comps	 = descriptor[ 'components' ] || [],
-				promises = [];
+				basePromise = (new Promise(function(fulfill){ trigger = fulfill; })),
+				waitedPromises = [];
 
 
 
-				comps.forEach(function( comp ){
+				comps.forEach(function( comp ) {
 					var fPath,
-					targetAnchor = !!comp['anchor'] ? $(comp['anchor']) : anchor,
-					target		 = targetAnchor || $( 'body' ),
-					targetOp	 = targetAnchor ? target.before : target.prepend;
-
+					targetAnchor = !!comp['anchor'] ? comp['anchor'] : anchor;
+					
+					
+					// Construct view dependency chain
+					if ( comp[ 'view' ] )
+					{
+						promiseGenerator = (function( fPath, anchor ){
+							return function() {
+								return new Promise(function(complete, failure) {
+									var
+									target	 = $( anchor || 'body' ),
+									targetOp = anchor ? target.before : target.prepend;
+								
+									$.get( fPath, function( htmlText ){
+										$( htmlText ).each(function(idx, tag){ targetOp.call( target, tag ); });
+		
+										complete();
+									}, 'text').fail(failure);
+								});
+							}
+						})( modulePath + comp['view'], targetAnchor );
+					
+						if ( !comp[ 'async' ] )
+							basePromise = basePromise.then(promiseGenerator);
+						else
+							waitedPromises.push(promiseGenerator);
+					}
+					
+					
+					
+					// Load other resources
 					if ( comp['style'] )
 					{
 						fPath = modulePath + comp['style'];
 						if ( $.inArray( fPath, styles ) < 0 )
 						{
-							promises.push( ___LOAD_RESOURCE( fPath, 'css', targetAnchor ) );
+							promiseGenerator = (function( fPath, anchor ){
+								return function(){ return ___LOAD_RESOURCE( fPath, 'css', anchor ); };
+							})( fPath, targetAnchor );
+							waitedPromises.push(promiseGenerator);
 							styles.push( fPath );
 						}
-					}
-
-					if ( comp['view'] )
-					{
-						promises.push(new Promise(function(complete, failure){
-							$.get( modulePath + comp['view'], function( htmlText ){
-								$( htmlText ).each(function(idx, tag){ targetOp.call( target, tag ); });
-
-								complete();
-							}, 'text').fail(failure);
-						}));
 					}
 
 					if ( comp['script'] )
@@ -94,18 +114,26 @@
 						fPath = modulePath + comp['script'];
 						if ( $.inArray( fPath, scripts ) < 0 )
 						{
-							promises.push( ___LOAD_RESOURCE( fPath, 'js', targetAnchor, true ) );
+							promiseGenerator = (function( fPath, anchor ){
+								return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true ); };
+							})( fPath, targetAnchor );
+							waitedPromises.push(promiseGenerator);
 							scripts.push( fPath );
 						}
 					}
 				});
+				
+				if ( waitedPromises.length == 0 ) waitedPromises.push(function(){ return new Promise(function(fulfill){ fulfill(); }); });
 
 
-
-				if ( promises.length == 0 )
-					promises.push(new Promise(function(fulfill){ fulfill(); }));
-
-				Promise.all( promises ).then( fulfill ).catch( reject );
+				basePromise.then(function(){
+					var promises = [];
+					waitedPromises.forEach(function(initiator){ promises.push( initiator() ); });
+					return Promise.all(promises);
+				}).then( fulfill ).catch( reject );
+				
+				// Start promise chain
+				trigger();
 			}).fail( reject );
 		});
 	}
@@ -137,8 +165,11 @@
 
 
 
-
-			if ( anchor )
+			if ( anchor ) anchor = $(anchor);
+			
+			
+			
+			if ( anchor && anchor.length > 0 )
 			{
 				anchor	 = anchor[0];
 				target	 = anchor.parentElement;
