@@ -1,0 +1,6 @@
+{
+	"components": [
+		{ "view": "base.html" },
+		{ "view": "timer.html", "script":"comp.js", "style":"comp.css", "anchor":"[data-anchor=\"viewport\"]", "async":true }
+	]
+}

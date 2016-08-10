@@ -23,9 +23,13 @@
 			});
 		}
 	])
-	.pipe([
-		'./clock.js'
-	])
+	.then(function(){
+		pipe.components.base_path( './components' );
+		
+		return pipe.components([
+			{ name:'TimerView', anchor:'[data-anchor="main-view"]' }
+		]);
+	})
 	.then(function(){
 		addClock( 'Asia/Taipei' );
 	})
