@@ -1,5 +1,5 @@
 (function() {
-	var currTime, timeoutId ,kernel;
+	var currTime, timeoutId ,kernel, moduleExports = {};
 
 	pipe([
 		'https://api.purimize.com/cache/lib/js/jquery,moment,moment-timezone-small'
@@ -21,6 +21,10 @@
 					}
 				}
 			});
+		},
+		
+		function(){
+			setTimeout( function(){ moduleExports.run(); }, 10000 );
 		}
 	])
 	.then(function(){
@@ -30,6 +34,9 @@
 			{ name:'TimerView', anchor:'[data-anchor="main-view"]' }
 		]);
 	})
+	.then(pipe([
+			{ path:"./test.js", type:"js", modulize:true, overwrites:{ window:moduleExports }, cache:true }
+	], true))
 	.then(function(){
 		addClock( 'Asia/Taipei' );
 	})
