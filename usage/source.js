@@ -35,7 +35,7 @@
 		]);
 	})
 	.then(pipe([
-			{ path:"./test.js", type:"js", modulize:true, overwrites:{ window:moduleExports }, cache:true }
+			{ path:"./test.js", type:"js", modulize:true, overwrites:{ window:moduleExports }, cache:false }
 	], true))
 	.then(function(){
 		addClock( 'Asia/Taipei' );
