@@ -4,10 +4,10 @@
 (function() {
 	// Pipe core
 	(function(){
-		window.pipe = window.pipe || function( dependencies ){
+		window.pipe = window.pipe || function( dependencies, passive ) {
 			if ( !Array.isArray( dependencies ) ) return false;
-
-			var __chainHead = ___CREATE_PIPE( dependencies, true );
+			
+			var __chainHead = ___CREATE_PIPE( dependencies, !passive );
 			__chainHead.pipe = ___CREATE_PIPE_CHAIN( __chainHead );
 			return __chainHead;
 		};
@@ -65,27 +65,28 @@
 
 				comps.forEach(function( comp ) {
 					var fPath,
+					caching = comp.hasOwnProperty( 'cache' ) ? !!comp[ 'cache' ] : true,
 					targetAnchor = !!comp['anchor'] ? comp['anchor'] : anchor;
 					
 					
-					// Construct view dependency chain
-					if ( comp[ 'view' ] )
-					{
-						promiseGenerator = (function( fPath, anchor ){
+					// Load view
+					if ( comp[ 'view' ] ) {
+					
+						promiseGenerator = (function( fPath, anchor, cache ){
 							return function() {
 								return new Promise(function(complete, failure) {
 									var
 									target	 = $( anchor || 'body' ),
 									targetOp = anchor ? target.before : target.prepend;
 								
-									$.get( fPath, function( htmlText ){
+									$.get( fPath + ( cache ? '' : '?' + (((new Date()).getTime() / 1000) | 0) ), function( htmlText ){
 										$( htmlText ).each(function(idx, tag){ targetOp.call( target, tag ); });
 		
 										complete();
 									}, 'text').fail(failure);
 								});
 							}
-						})( modulePath + comp['view'], targetAnchor );
+						})( modulePath + comp['view'], targetAnchor, caching );
 					
 						if ( !comp[ 'async' ] )
 							basePromise = basePromise.then(promiseGenerator);
@@ -93,12 +94,9 @@
 							waitedPromises.push(promiseGenerator);
 					}
 					
-					
-					
-					// Load other resources
-					if ( comp['style'] )
-					{
-						fPath = modulePath + comp['style'];
+					// Load css
+					if ( comp['style'] ) {
+						fPath = modulePath + comp['style'] + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
 						if ( $.inArray( fPath, styles ) < 0 )
 						{
 							promiseGenerator = (function( fPath, anchor ){
@@ -109,16 +107,28 @@
 						}
 					}
 
-					if ( comp['script'] )
-					{
-						fPath = modulePath + comp['script'];
-						if ( $.inArray( fPath, scripts ) < 0 )
+					// Load js
+					if ( comp['script'] ) {
+					
+						if ( !comp[ 'modulize' ] )
 						{
-							promiseGenerator = (function( fPath, anchor ){
-								return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true ); };
-							})( fPath, targetAnchor );
+							fPath = modulePath + comp['script'] + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
+							if ( $.inArray( fPath, scripts ) < 0 )
+							{
+								promiseGenerator = (function( fPath, anchor ){
+									return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true ); };
+								})( fPath, targetAnchor );
+								waitedPromises.push(promiseGenerator);
+								scripts.push( fPath );
+							}
+						}
+						else
+						{
+							promiseGenerator = (function( fPath, cache ){
+								return function(){ return ___LOAD_MODULE( fPath + ( cache ? '' : '?' + (((new Date()).getTime() / 1000) | 0) ) ); }
+							})( modulePath + comp['script'], caching );
+							
 							waitedPromises.push(promiseGenerator);
-							scripts.push( fPath );
 						}
 					}
 				});
@@ -186,25 +196,59 @@
 				target.insertBefore( tag, anchor );
 		});
 	}
+	function ___LOAD_MODULE( src, overwrites ) {
+		return new Promise(function( fulfill, reject ) {
+			var variables = [], values = [];
+			if ( arguments.length > 1 && !!overwrites )
+			{
+				for( var prop in overwrites )
+				{
+					if ( prop !== "module" && overwrites.hasOwnProperty( prop ) )
+					{
+						variables.push( prop );
+						values.push( overwrites[ prop ] );
+					}
+				}
+			}
+			
+		
+			$.get( src, function( jsContext ){
+				var moduleCtrl = {};
+				
+				variables.push( 'module', jsContext );
+				values.push( moduleCtrl );
+				(Function.apply( null, variables )).apply( {}, values );
+				
+				Promise.resolve(moduleCtrl.signal).then(fulfill).catch(reject);
+			}, 'text').fail(reject);
+		});
+	}
 	function ___RESOURCE_FETCHER( resList ) {
 		return function(){
 			var __promises	= [];
 			resList.forEach(function( item ) {
-				var itemAddr, itemType;
+				var itemAddr, itemType, promise, caching = true, isModulized, moduleOverwite = {};
 				
 				if ( item === Object(item) )
 				{
 					if ( !item.path ) return;
 					
-					itemAddr = item.path;
-					itemType = item.type || 'js';
+					itemAddr		= item.path;
+					itemType		= item.type || 'js';
+					isModulized		= !!item.modulize;
+					moduleOverwite	= item.overwrites || {};
+					caching			= item.hasOwnProperty( 'cache' ) ? !!item[ 'cache' ] : true;
 				}
 				else
 				{
-					itemAddr = item;
-					itemType = 'js';
+					itemAddr	= item;
+					itemType	= 'js';
+					isModulized = false;
 				}
-				__promises.push( ___LOAD_RESOURCE( itemAddr, itemType ) );
+				
+				itemAddr = itemAddr + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
+				promise = ( itemType == 'js' && isModulized ) ? ___LOAD_MODULE( itemAddr, moduleOverwite ) : ___LOAD_RESOURCE( itemAddr, itemType )
+				__promises.push( promise );
 			});
 			return Promise.all( __promises );
 		};
@@ -238,8 +282,12 @@
 				return;
 			}
 
-			__chainHead = __chainHead.then(___RESOURCE_FETCHER( __resources ));
-			__resources = [];
+
+			if ( __resources.length > 0 )
+			{
+				__chainHead = __chainHead.then(___RESOURCE_FETCHER( __resources ));
+				__resources = [];
+			}
 
 
 			if ( typeof item === 'function' ) {
