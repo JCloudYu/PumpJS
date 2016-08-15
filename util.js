@@ -58,13 +58,13 @@
 		for ( prop in obj2 )
 		{
 			if ( !obj2.hasOwnProperty( prop ) ) continue;
-			isAry2 = Array.isArray(obj2[prop]);
+			isAry2	= Array.isArray(obj2[prop]);
 			isFunc2 = ___CORE_TO_STR.call(obj2[prop]) === '[object Function]';
-			
+
 
 			if ( obj1.hasOwnProperty( prop ) )
 			{
-				isAry1 = Array.isArray(obj1[prop]);
+				isAry1	= Array.isArray(obj1[prop]);
 				isFunc1 = ___CORE_TO_STR.call(obj1[prop]) === '[object Function]';
 				
 			
@@ -81,8 +81,11 @@
 				if ( !overwrite ) continue;
 			}
 
-			
-			obj1[ prop ] = !isAry2 ? obj2[ prop ] : obj2[ prop ].slice();
+
+			if ( obj2[ prop ] === undefined )
+				delete obj1[ prop ];
+			else
+				obj1[ prop ] = !isAry2 ? obj2[ prop ] : obj2[ prop ].slice();
 		}
 
 		return obj1;
