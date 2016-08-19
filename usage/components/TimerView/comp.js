@@ -1,5 +1,5 @@
 (function() {
-	var
+	var syncCounter = 0,
 	globalKernel	= pump.instantiate( 'clock-controller' ),
 	timeSource		= pump.instance( 'time-source-controller' ),
 	internalPump	= new pump(),
@@ -10,7 +10,11 @@
 	globalKernel.on( 'SOURCE SYNC', function( e ){
 		// This event can be fired externally ( source is not null )
 			if ( !e.source ) return;
-
+			
+			syncCounter++;
+			if ( syncCounter < 2 ) return;
+			
+			syncCounter = 0;
 			var providerInst = pump.instance( e.source );
 			internalKernel.fire( 'TIME SYNC', {
 				global:	timeSource,

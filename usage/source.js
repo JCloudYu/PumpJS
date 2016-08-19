@@ -48,10 +48,14 @@
 		addClock( 'Asia/Taipei' );
 	})
 	.then(function(){
+		var startCounter = 0;
 		kernel
 		.on( 'SOURCE START', function( e ){
 			// This event can be fired externally ( source is null )
 			if ( !!e.source ) return;
+			
+			startCounter++;
+			if ( startCounter < 2 ) return;
 		
 			return new Promise(function( fulfill ){
 				console.log( "Start waiting for 10 seconds!" );
@@ -71,13 +75,13 @@
 
 		function ___UpdateTime(){
 			currTime = moment();
-			kernel.fire( 'SOURCE SYNC' );
+			kernel.fire( 'SOURCE SYNC' ).fire( 'SOURCE SYNC' );
 
 			timeoutId = setTimeout(___UpdateTime, 500);
 		}
 	})
 	.then(function(){
-		return pump.fire( 'SOURCE START' );
+		return pump.fire( 'SOURCE START' ).fire( 'SOURCE START' );
 	})
 	.then(function(){
 		console.log( "OVER!" );
