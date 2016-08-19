@@ -11,6 +11,7 @@
 	(function() {
 		var
 		// INFO: Global ID System
+		__NAMED_PUMPS	= {},
 		__ID_CANDIDATES = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
 		__CANDIDATE_LEN = __ID_CANDIDATES.length,
 		__ID_GENERATOR	 = (function(){
@@ -250,11 +251,11 @@
 
 		// INFO: Define __ACCESS_POINT Factory
 		// INFO: And Map default pump's api onto __ACCESS_POINT
-		__ACCESS_POINT	 = function(){
+		__ACCESS_POINT	 = function( pumpId ){
 
 			if ( !(this instanceof __ACCESS_POINT) )
-				return __DEFAULT_PUMP;
-
+				return ( arguments.length > 0 ) ? (__NAMED_PUMPS[ pumpId ] = __NAMED_PUMPS[ pumpId ] || new pump()) : __DEFAULT_PUMP;
+	
 			__PUMP_FACTORY( this );
 		};
 		___IMPRINT( __DEFAULT_PUMP, __ACCESS_POINT, true );
@@ -288,6 +289,8 @@
 			if ( !a.hasOwnProperty( key ) ) continue;
 			if ( !b.hasOwnProperty(key) || overwrite ) b[ key ] = a [ key ];
 		}
+		
+		return b;
 	}
 	// endregion
 })();
