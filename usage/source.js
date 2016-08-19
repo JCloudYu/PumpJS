@@ -6,7 +6,8 @@
 	])
 	.pipe([
 //		'./base64-large-file.js',
-		'../util/misc.js',
+		{ path:'./not-exists.js', type:'js', important:false },
+		{ path:'../util.js', type:'js', cache:true },
 		{ path:'./test.css', type:'css' }, // CSS mode
 		{  },	// Will be an anchor ( Not a valid document descriptor )
 		function(){
@@ -24,6 +25,12 @@
 		},
 		
 		function(){
+			var obj1 = { a:1, b:2, c:3, d:4 },
+				obj2 = { a:4, c:5, d:undefined };
+				
+			$U.merge( obj1, obj2, true );
+			console.log( obj1 );
+		
 			setTimeout( function(){ moduleExports.run(); }, 10000 );
 		}
 	])
@@ -35,7 +42,7 @@
 		]);
 	})
 	.then(pipe([
-			{ path:"./test.js", type:"js", modulize:true, overwrites:{ window:moduleExports }, cache:false }
+		{ path:"./test.js", type:"js", modulize:true, overwrites:{ window:moduleExports }, cache:false }
 	], true))
 	.then(function(){
 		addClock( 'Asia/Taipei' );
@@ -64,5 +71,8 @@
 	})
 	.then(function(){
 		pump.fire( 'SOURCE START' );
+	})
+	.catch(function(err){
+		alert( JSON.stringify(err) );
 	});
 })();
