@@ -174,16 +174,18 @@
 						return this;
 					},
 					fire: function( eventType, args ) {
-						return Promise.resolve(this).then(function(){
-							var promise = __fireEvent( uniqueId, null, eventType, args );
-							return ___IMPRINT( junction, promise, true );
+						var promise = Promise.resolve(this).then(function(){
+							return __fireEvent( uniqueId, null, eventType, args );
 						});
+						
+						return ___IMPRINT( junction, promise, true );
 					},
 					fireTarget: function( target, eventType, args ) {
-						return Promise.resolve(this).then(function(){
-							var promise = __fireEvent( uniqueId, target, eventType, args );
-							return ___IMPRINT( junction, promise, true );
+						var promise = Promise.resolve(this).then(function(){
+							return __fireEvent( uniqueId, target, eventType, args );
 						});
+							
+						return ___IMPRINT( junction, promise, true );
 					}
 				};
 				return junction;
@@ -224,16 +226,18 @@
 			injectTarget = injectTarget || {};
 			injectTarget.instantiate = __INSTANTIATOR;
 			injectTarget.fire = function( eventType, args ) {
-				return Promise.resolve(this).then(function() {
-					var promise = __fireEvent( null, null, eventType, args );
-					return ___IMPRINT( injectTarget, promise, true );
+				var promise = Promise.resolve(this).then(function() {
+					return __fireEvent( null, null, eventType, args );
 				});
+				
+				return ___IMPRINT( injectTarget, promise, true );
 			};
 			injectTarget.fireTarget = function( target, eventType, args ){
-				return Promise.resolve(this).then(function() {
-					var promise = __fireEvent( null, target, eventType, args );
-					return ___IMPRINT( injectTarget, promise, true );
+				var promise = Promise.resolve(this).then(function() {
+					return __fireEvent( null, target, eventType, args );
 				});
+				
+				return ___IMPRINT( injectTarget, promise, true );
 			};
 			injectTarget.instance = function( targetId ){
 				var inst = __getInstance( targetId );
