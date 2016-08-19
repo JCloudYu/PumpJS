@@ -38,6 +38,7 @@
 		pipe.components.base_path( './components' );
 		
 		return pipe.components([
+			{ name:'Joint', anchor:'[data-anchor="main-joint"]' },
 			{ name:'TimerView', anchor:'[data-anchor="main-view"]' }
 		]);
 	})
@@ -87,6 +88,6 @@
 		console.log( "OVER!" );
 	})
 	.catch(function(err){
-		alert( JSON.stringify(err) );
+		console.log( arguments );
 	});
 })();

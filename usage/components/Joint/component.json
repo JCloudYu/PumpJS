@@ -1,0 +1,5 @@
+{
+	"components":[
+		{ "view":"joint.html", "cache":false }
+	]
+}
