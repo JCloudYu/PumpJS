@@ -52,8 +52,15 @@
 		.on( 'SOURCE START', function( e ){
 			// This event can be fired externally ( source is null )
 			if ( !!e.source ) return;
-
-			timeoutId = setTimeout( ___UpdateTime, 0 );
+		
+			return new Promise(function( fulfill ){
+				console.log( "Start waiting for 10 seconds!" );
+				setTimeout( function(){
+					timeoutId = setTimeout( ___UpdateTime, 0 );
+					console.log( "start!" );
+					fulfill();
+				}, 10000 );
+			});
 		})
 		.on( 'SOURCE STOP', function( e ){
 			// This event can be fired externally ( source is null )
@@ -70,7 +77,10 @@
 		}
 	})
 	.then(function(){
-		pump.fire( 'SOURCE START' );
+		return pump.fire( 'SOURCE START' );
+	})
+	.then(function(){
+		console.log( "OVER!" );
 	})
 	.catch(function(err){
 		alert( JSON.stringify(err) );
