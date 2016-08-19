@@ -20,21 +20,27 @@
 		window.pipe.components = window.pipe.components || function( components ) {
 			if ( !Array.isArray( components ) ) return false;
 
-			var __promises = [];
+			var __promise = Promise.resolve(), __promises = [];
 			components.forEach(function( item ){
 
-				var args = [];
+				var args = [], async = false;
 
 				if ( typeof item === "string" )
 					args.push( item );
 				else
+				{
+					async = !!item.async;
 					args.push( item.name, item.basePath || __compBasePath, item.anchor );
+				}
 
 
-				__promises.push( ___LOAD_COMPONENT.apply( null, args ) );
+				if ( !async )
+					__promise = __promise.then(function(){ return ___LOAD_COMPONENT.apply( null, args ); });
+				else
+					__promises.push( ___LOAD_COMPONENT.apply( null, args ) );
 			});
 
-			return Promise.all( __promises );
+			return __promise.then(function(){ return Promise.all( __promises ); });
 		};
 
 		window.pipe.components.base_path = function( path ){
@@ -47,7 +53,7 @@
 	function ___LOAD_COMPONENT( componentName, basePath, anchor ) {
 
 		basePath = basePath || './components';
-		anchor	 = anchor ? $( anchor ) : null;
+		anchor	 = anchor || null;
 
 		return new Promise(function( fulfill, reject ){
 
