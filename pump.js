@@ -65,47 +65,40 @@
 
 
 			// INFO: Internal APIs
-			__fireEvent		= function( src, dest, type, args, async ) {
-				var inst;
+			__fireEvent		= function( src, dest, type, args ) {
+				var inst, promises = [];
 
 				if ( !dest )
 				{
 					for( var key in __instances )
 					{
 						if ( !__instances.hasOwnProperty( key ) ) continue;
-						___fire( __instances[key], src, type, args, async );
+						
+						inst = __instances[key];
+						promises.push( inst.__fireEvent( { type:type, target:null, source:src }, args ) );
 					}
 				}
 				else
+				if ( inst = __getInstance( dest ) )
 				{
-					if ( !(inst = __getInstance( dest )) ) return;
-					___fire( inst, src, type, args, async );
-
+					promises.push( inst.__fireEvent( { type:type, target:null, source:src }, args ) );
 				}
-
-
-				function ___fire( inst, src, type, args, async ) {
-
-					if ( !async )
-					{
-						inst.__fireEvent( { type:type, target:null, source:src }, args );
-						return;
-					}
-
-					setTimeout( function(){ inst.__fireEvent( { type:type, target:null, source:src }, args ); }, 0 );
-				}
+				
+				
+				
+				if ( promises.length == 0 ) promises.push( Promise.resolve( null ) );
+				return Promise.all( promises );
 			},
-			__registerEvent = function( srcId, type, cb, async ) {
+			__registerEvent = function( srcId, type, cb ) {
 				srcId	= srcId || '';
 				type	= type || null;
 				cb		= ___IS_CALLABLE(cb) ? cb : null;
-				async	= (arguments.length > 2) ? !!async : true;
 
 
 				var _interface = __instances[ srcId ];
 				if ( !_interface || !type || !cb ) return false;
 
-				_interface.__regEvent( type, cb, async );
+				_interface.__regEvent( type, cb );
 				return true;
 			},
 			__getInstance	= function( targetId ) {
@@ -121,7 +114,10 @@
 
 				return {
 					__fireEvent: function( event, args ) {
-						var evtTypes = [ '*', event.type ];
+						var
+						evtTypes = [ '*', event.type ],
+						promises = [];
+						
 
 						evtTypes.forEach(function( evtType )
 						{
@@ -129,34 +125,29 @@
 							if ( !Array.isArray( queue ) ) return;
 
 							queue.forEach(function(desc){
-								var doEvt = function(){
-									desc.cb( event, args );
-								};
-
-								if ( !desc.async )
-								{
-									doEvt();
-									return;
-								}
-
-								setTimeout( doEvt, 0 );
+								promises.push(Promise.resolve( desc.cb( event, args ) ));
 							});
 						});
+						
+						
+						
+						if ( promises.length == 0 ) promises.push( Promise.resolve( true ) );
+						return Promise.all( promises );
 					},
-					__regEvent: function( eventType, callback, async ) {
+					__regEvent: function( eventType, callback ) {
 						eventType.split( ',' ).forEach(function( type ){
 							if ( !evtQueues.hasOwnProperty( type ) )
 								evtQueues[ type ] = [];
 
-							evtQueues[ type ].push({ cb: callback, async: async });
+							evtQueues[ type ].push({ cb: callback });
 						});
 					}
 				};
 			},
 			__KERNEL_JUNCTION	= function( uniqueId ) {
-				return {
+				var junction = {
 					getId: function(){ return uniqueId; },
-					on: function( eventType, callback, async ) {
+					on: function( eventType, callback ) {
 						var
 						args	= Array.prototype.slice.call( arguments ),
 						events  = [], params = [],
@@ -182,17 +173,20 @@
 						__registerEvent.apply( null, params );
 						return this;
 					},
-					fire: function( eventType, args, async ) {
-						async = async || false;
-						__fireEvent( uniqueId, null, eventType, args, async );
-						return this;
+					fire: function( eventType, args ) {
+						return Promise.resolve(this).then(function(){
+							var promise = __fireEvent( uniqueId, null, eventType, args );
+							return ___IMPRINT( junction, promise, true );
+						});
 					},
-					fireTarget: function( target, eventType, args, async ) {
-						async = async || false;
-						__fireEvent( uniqueId, target, eventType, args, async );
-						return this;
+					fireTarget: function( target, eventType, args ) {
+						return Promise.resolve(this).then(function(){
+							var promise = __fireEvent( uniqueId, target, eventType, args );
+							return ___IMPRINT( junction, promise, true );
+						});
 					}
 				};
+				return junction;
 			},
 			__INSTANTIATOR		= function( instanceId, interfaceGenerator ) {
 
@@ -229,15 +223,17 @@
 
 			injectTarget = injectTarget || {};
 			injectTarget.instantiate = __INSTANTIATOR;
-			injectTarget.fire = function( eventType, args, async ) {
-				async = async || false;
-				__fireEvent( null, null, eventType, args, async );
-				return this;
+			injectTarget.fire = function( eventType, args ) {
+				return Promise.resolve(this).then(function() {
+					var promise = __fireEvent( null, null, eventType, args );
+					return ___IMPRINT( injectTarget, promise, true );
+				});
 			};
-			injectTarget.fireTarget = function( target, eventType, args, async ){
-				async = async || false;
-				__fireEvent( null, target, eventType, args, async );
-				return this;
+			injectTarget.fireTarget = function( target, eventType, args ){
+				return Promise.resolve(this).then(function() {
+					var promise = __fireEvent( null, target, eventType, args );
+					return ___IMPRINT( injectTarget, promise, true );
+				});
 			};
 			injectTarget.instance = function( targetId ){
 				var inst = __getInstance( targetId );
