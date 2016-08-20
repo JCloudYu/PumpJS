@@ -20,24 +20,34 @@
 		window.pipe.components = window.pipe.components || function( components ) {
 			if ( !Array.isArray( components ) ) return false;
 
-			var __promise = Promise.resolve(), __promises = [];
+			var __promiseGenerator, __promise = Promise.resolve(), __promises = [];
 			components.forEach(function( item ){
 
-				var async = true, args = [];
+				var purge = false, async = true, args = [];
 
 				if ( typeof item === "string" )
 					args.push( item );
 				else
 				{
-					async = item.hasOwnProperty('async') ? !!item.async : true;
+					async = item.hasOwnProperty('async') ? !!item.async : async;
+					purge = item.hasOwnProperty('remove-anchor') ? !!item[ 'remove-anchor' ] : purge;
 					args.push( item.name, item.basePath || __compBasePath, item.anchor );
 				}
 
 
+				__promiseGenerator = (function( args, anchor, purge ){ return function(){
+					return ___LOAD_COMPONENT.apply( null, args ).then(function(){
+						if ( !purge || !anchor || anchor == "" ) return;
+						
+						$( anchor ).remove();
+					});
+				};})( args, item.anchor, purge );
+				
+				
 				if ( !async )
-					__promise = __promise.then(function(){ return ___LOAD_COMPONENT.apply( null, args ); });
+					__promise = __promise.then(__promiseGenerator);
 				else
-					__promises.push(function(){ return ___LOAD_COMPONENT.apply( null, args ); });
+					__promises.push(__promiseGenerator);
 			});
 
 			return __promise.then(function(){
