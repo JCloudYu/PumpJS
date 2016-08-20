@@ -23,13 +23,13 @@
 			var __promise = Promise.resolve(), __promises = [];
 			components.forEach(function( item ){
 
-				var args = [], async = false;
+				var async = true, args = [];
 
 				if ( typeof item === "string" )
 					args.push( item );
 				else
 				{
-					async = !!item.async;
+					async = item.hasOwnProperty('async') ? !!item.async : true;
 					args.push( item.name, item.basePath || __compBasePath, item.anchor );
 				}
 
@@ -37,10 +37,14 @@
 				if ( !async )
 					__promise = __promise.then(function(){ return ___LOAD_COMPONENT.apply( null, args ); });
 				else
-					__promises.push( ___LOAD_COMPONENT.apply( null, args ) );
+					__promises.push(function(){ return ___LOAD_COMPONENT.apply( null, args ); });
 			});
 
-			return __promise.then(function(){ return Promise.all( __promises ); });
+			return __promise.then(function(){
+				var promiseQueue = [];
+				__promises.forEach(function(doPromise){ promiseQueue.push( doPromise() ); });
+				return Promise.all( promiseQueue );
+			});
 		};
 
 		window.pipe.components.base_path = function( path ){
@@ -70,7 +74,7 @@
 
 
 				comps.forEach(function( comp ) {
-					var fPath,
+					var fPath, async = (comp.hasOwnProperty('async') ? !!comp.async : true),
 					caching = comp.hasOwnProperty( 'cache' ) ? !!comp[ 'cache' ] : true,
 					targetAnchor = !!comp['anchor'] ? comp['anchor'] : anchor;
 					
@@ -94,7 +98,7 @@
 							}
 						})( modulePath + comp['view'], targetAnchor, caching );
 					
-						if ( !comp[ 'async' ] )
+						if ( !async )
 							basePromise = basePromise.then(promiseGenerator);
 						else
 							waitedPromises.push(promiseGenerator);
@@ -108,8 +112,12 @@
 							promiseGenerator = (function( fPath, anchor ){
 								return function(){ return ___LOAD_RESOURCE( fPath, 'css', anchor ); };
 							})( fPath, targetAnchor );
-							waitedPromises.push(promiseGenerator);
 							styles.push( fPath );
+							
+							if ( !async )
+								basePromise = basePromise.then(promiseGenerator);
+							else
+								waitedPromises.push(promiseGenerator);
 						}
 					}
 
@@ -124,8 +132,14 @@
 								promiseGenerator = (function( fPath, anchor ){
 									return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true, !!comp['important'] ); };
 								})( fPath, targetAnchor );
-								waitedPromises.push(promiseGenerator);
+								
 								scripts.push( fPath );
+								
+								
+								if ( !async )
+									basePromise = basePromise.then(promiseGenerator);
+								else
+									waitedPromises.push(promiseGenerator);
 							}
 						}
 						else
@@ -134,7 +148,10 @@
 								return function(){ return ___LOAD_MODULE( fPath + ( cache ? '' : '?' + (((new Date()).getTime() / 1000) | 0) ), null, !!comp['important'] ); }
 							})( modulePath + comp['script'], caching );
 							
-							waitedPromises.push(promiseGenerator);
+							if ( !async )
+								basePromise = basePromise.then(promiseGenerator);
+							else
+								waitedPromises.push(promiseGenerator);
 						}
 					}
 				});
