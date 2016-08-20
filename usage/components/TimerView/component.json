@@ -1,6 +1,6 @@
 {
 	"components": [
-		{ "view": "base.html" },
-		{ "view": "timer.html", "script":"comp.js", "style":"comp.css", "anchor":"[data-anchor=\"viewport\"]", "async":true, "modulize":true }
+		{ "view": "base.html", "async":false },
+		{ "view": "timer.html", "script":"comp.js", "style":"comp.css", "anchor":"[data-anchor=\"viewport\"]", "modulize":true }
 	]
 }
