@@ -38,7 +38,7 @@
 		pipe.components.base_path( './components' );
 		
 		return pipe.components([
-			{ name:'Joint', anchor:'[data-anchor="main-joint"]', async:false },
+			{ name:'Joint',		anchor:'[data-anchor="main-joint"]', async:false, "remove-anchor":true },
 			{ name:'TimerView', anchor:'[data-anchor="main-view"]' }
 		]);
 	})
