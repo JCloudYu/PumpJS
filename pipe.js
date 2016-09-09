@@ -189,6 +189,7 @@
 	
 		return new Promise(function( fulfill, reject ) {
 			var tag, target,
+			ajax = false,
 			required = (args.length > 4 ? !!important : true);
 
 			switch ( type )
@@ -206,19 +207,17 @@
 					tag.src = src;
 					break;
 
+				case "html":
+					ajax = true;
+					break;
+
 				default:
 					return null;
 			}
 
-			tag.onload  = fulfill;
-			tag.onerror = function(){ (required ? reject : fulfill).apply( null, arguments ); };
 
-
-
+			
 			if ( anchor ) anchor = $(anchor);
-			
-			
-			
 			if ( anchor && anchor.length > 0 )
 			{
 				anchor	 = anchor[0];
@@ -227,13 +226,37 @@
 			else
 			{
 				anchor	 = null;
-				target	 = $( type == "js" ? 'body' : 'head' )[0];
+				target	 = $( type == "css" ? 'head' : 'body' )[0];
 			}
 
-			if ( late )
-				setTimeout(function(){ target.insertBefore( tag, anchor ); }, 0);
+
+
+			if ( !ajax )
+			{
+				tag.onload  = fulfill;
+				tag.onerror = processErr;
+	
+				if ( late )
+					setTimeout(function(){ target.insertBefore( tag, anchor ); }, 0);
+				else
+					target.insertBefore( tag, anchor );
+			}
 			else
-				target.insertBefore( tag, anchor );
+			{
+				$.get( src, function( htmlText ) {
+					$( htmlText ).each(function(idx, tag) {
+						if ( late )
+							setTimeout(function(){ target.insertBefore( tag, anchor ); }, 0);
+						else
+							target.insertBefore( tag, anchor );
+					});
+
+					fulfill();
+				}, 'text')
+				.fail(processErr);
+			}
+			
+			function processErr(){ (required ? reject : fulfill).apply( null, arguments ); }
 		});
 	}
 	function ___LOAD_MODULE( src, overwrites, important ) {
@@ -299,6 +322,8 @@
 				promise = ( itemType == 'js' && isModulized ) ? ___LOAD_MODULE( itemAddr, moduleOverwite, important ) : ___LOAD_RESOURCE( itemAddr, itemType, null, null, important );
 				__promises.push( promise );
 			});
+			
+			
 			return Promise.all( __promises );
 		};
 		return ( !!loadImmediately ) ? loader() : loader;
