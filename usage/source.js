@@ -28,7 +28,10 @@
 			return pipe
 			.loadResource( { path:'./other.css', type:'css', cache:false } )
 			.then(function(){
-				return pipe.loadResource( { path:'./run.js', type:'js', cache:false, modulize:true } )
+				return pipe.loadResource([
+					{ path:'./run.js', type:'js', cache:false, modulize:true },
+					{ path:'./html.html', type:'html', cache:false }
+				]);
 			});
 		},
 		
