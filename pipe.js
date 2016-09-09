@@ -11,6 +11,10 @@
 			__chainHead.pipe = ___CREATE_PIPE_CHAIN( __chainHead );
 			return __chainHead;
 		};
+		
+		window.pipe.loadResource = window.pipe.loadResource || function( resList, immediate ){
+			return ___RESOURCE_FETCHER( resList, arguments.length > 1 ? !!immediate : true );
+		};
 	})();
 
 	// pipe.components
@@ -61,8 +65,8 @@
 			__compBasePath = path || './components';
 		};
 	})();
-
-
+	
+	
 
 	function ___LOAD_COMPONENT( componentName, basePath, anchor ) {
 
@@ -264,10 +268,12 @@
 			}, 'text').fail(function(){ (required ? reject : fulfill).apply( null, arguments ); });
 		});
 	}
-	function ___RESOURCE_FETCHER( resList ) {
-		return function(){
+	function ___RESOURCE_FETCHER( resList, loadImmediately ) {
+		var
+		fileList = Array.isArray( resList ) ? resList : [ resList ],
+		loader = function() {
 			var __promises	= [];
-			resList.forEach(function( item ) {
+			fileList.forEach(function( item ) {
 				var itemAddr, itemType, promise, important, caching = true, isModulized, moduleOverwite = {};
 				
 				if ( item === Object(item) )
@@ -295,6 +301,7 @@
 			});
 			return Promise.all( __promises );
 		};
+		return ( !!loadImmediately ) ? loader() : loader;
 	}
 	function ___CREATE_PIPE_CHAIN( prevChain ) {
 		return function( dependencies ) {

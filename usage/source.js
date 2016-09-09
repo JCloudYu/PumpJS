@@ -25,6 +25,14 @@
 		},
 		
 		function(){
+			return pipe
+			.loadResource( { path:'./other.css', type:'css', cache:false } )
+			.then(function(){
+				return pipe.loadResource( { path:'./run.js', type:'js', cache:false, modulize:true } )
+			});
+		},
+		
+		function(){
 			var obj1 = { a:1, b:2, c:3, d:4 },
 				obj2 = { a:4, c:5, d:undefined };
 				
