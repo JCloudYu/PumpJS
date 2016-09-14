@@ -256,7 +256,7 @@
 				.fail(processErr);
 			}
 			
-			function processErr(){ (required ? reject : fulfill).apply( null, arguments ); }
+			function processErr(){ (required ? reject : fulfill).call( null, Array.prototype.slice.call( arguments ) ); }
 		});
 	}
 	function ___LOAD_MODULE( src, overwrites, important ) {
@@ -288,7 +288,10 @@
 				(Function.apply( null, variables )).apply( {}, values );
 				
 				Promise.resolve(moduleCtrl.signal).then(fulfill).catch(reject);
-			}, 'text').fail(function(){ (required ? reject : fulfill).apply( null, arguments ); });
+			}, 'text')
+			.fail(function(){
+				(required ? reject : fulfill).call( null, Array.prototype.slice.call( arguments ) );
+			});
 		});
 	}
 	function ___RESOURCE_FETCHER( resList, loadImmediately ) {

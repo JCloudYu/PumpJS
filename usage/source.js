@@ -6,7 +6,7 @@
 	])
 	.pipe([
 //		'./base64-large-file.js',
-		{ path:'./not-exists.js', type:'js', important:false },
+		{ path:'./not-exists.js', type:'js', modulize:true, important:false },
 		{ path:'../util.js', type:'js', cache:true },
 		{ path:'./test.css', type:'css' }, // CSS mode
 		{  },	// Will be an anchor ( Not a valid document descriptor )
@@ -26,7 +26,10 @@
 		
 		function(){
 			return pipe
-			.loadResource( { path:'./other.css', type:'css', cache:false } )
+			.loadResource([
+				{ path:'./other.css', type:'css', cache:false },
+				{ path:'./b.css', type:'css', cache:false, important:false },
+			])
 			.then(function(){
 				return pipe.loadResource([
 					{ path:'./run.js', type:'js', cache:false, modulize:true },
