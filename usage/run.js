@@ -1,6 +1,8 @@
 /**
  * Created by JCloudYu on 9/9/16.
  */
+
+//# sourceURL=run.js
 (function() {
 	"use strict";
 	
@@ -8,15 +10,19 @@
 
 	module.signal = new Promise(function( fulfill ){
 		var countdown = 10;
-	
-		setTimeout(___LOOP, 0);
 		
-		function ___LOOP(){
-			title.text( countdown-- );
-			if ( countdown > 0 )
-				setTimeout( ___LOOP, 1000 );
+		
+		setInterval(function(){
+			if ( countdown <= 0 )
+			{
+				fulfill();
+			}
 			else
-				setTimeout( fulfill, 0 );
-		}
+			{
+				title.text( countdown );
+				countdown--;
+				return new Promise(function( complete ){ setTimeout(complete, 1000); });
+			}
+		}, 1, 11, true );
 	});
 })();

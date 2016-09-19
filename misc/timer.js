@@ -1,5 +1,6 @@
 (function(){
 	var
+	__Promise		= window.Promise,
 	__idGenerator	= 0,
 	__idPool		= [],
 	__prevClear		= window.clearInterval,
@@ -10,7 +11,7 @@
 		if ( __idPool[ timerId ] )
 			delete __idPool[ timerId ];
 	};
-	window.clearInterval.prev = __prevClear;
+	window.clearInterval.original = __prevClear;
 
 
 
@@ -26,9 +27,9 @@
 
 
 
-	window.setInterval = function( func, interval, repeats, args )
+	window.setInterval = function( func, interval, repeats, immediate, args )
 	{
-		repeats	  = (arguments.length > 2) ? repeats : null;
+		repeats = ( arguments.length > 2 ) ? repeats : null;
 
 		var
 		___inputArgs = Array.prototype.slice.call( arguments ),
@@ -37,10 +38,21 @@
 			if ( !__idPool[ ___baseId ] || (repeats !== null && repeats-- <= 0) )
 				return;
 
-			__idPool[ ___baseId ].id = setTimeout( ___repeat, interval );
-			try{
-				func.apply( null, __idPool[ ___baseId ].args );
-			}catch(e){
+			try {
+				if ( !__Promise )
+				{
+					func.apply( null, __idPool[ ___baseId ].args );
+					__idPool[ ___baseId ].id = setTimeout( ___repeat, interval );
+				}
+				else
+				{
+					__Promise.resolve( func.apply( null, __idPool[ ___baseId ].args ) ).then(function(){
+						__idPool[ ___baseId ].id = setTimeout( ___repeat, interval );
+					});
+				}
+			}
+			catch(e)
+			{
 				delete __idPool[ ___baseId ];
 				throw e;
 			}
@@ -48,13 +60,13 @@
 
 
 
-		___inputArgs.splice( 0, 3 );
+		___inputArgs.splice( 0, 4 );
 		__idPool[ ___baseId ] = {
 			args: ___inputArgs,
-			id: setTimeout(___repeat, interval)
+			id: setTimeout(___repeat, immediate ? 0 : interval)
 		};
 
 		return ___baseId;
 	};
-	window.setInterval.prev = __prevSet;
+	window.setInterval.original = __prevSet;
 })();
