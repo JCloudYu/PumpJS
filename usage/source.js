@@ -28,7 +28,7 @@
 			return pipe
 			.loadResource([
 				{ path:'./other.css', type:'css', cache:false },
-				{ path:'./b.css', type:'css', cache:false, important:false },
+				{ path:'./b.css', type:'css', cache:false, important:false }
 			])
 			.then(function(){
 				return pipe.loadResource([
