@@ -2,7 +2,7 @@
 	var currTime, timeoutId ,kernel, moduleExports = {};
 
 	pipe([
-		'https://api.purimize.com/cache/lib/js/jquery,moment,moment-timezone-small'
+		'https://api.purimize.com/cache/lib/js/jquery,moment,moment-timezone-small/_.js'
 	])
 	.pipe([
 //		'./base64-large-file.js',
