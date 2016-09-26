@@ -12,6 +12,10 @@
 			return __chainHead;
 		};
 		
+		window.pipe.passive = function( dependencies ){
+			return window.pipe( dependencies, true );
+		};
+		
 		window.pipe.loadResource = window.pipe.loadResource || function( resList, immediate ){
 			return ___RESOURCE_FETCHER( resList, arguments.length > 1 ? !!immediate : true );
 		};
