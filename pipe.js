@@ -2,30 +2,32 @@
  * Created by JCloudYu on 5/10/16.
  */
 (function() {
-	// Pipe core
+	var
+	__prevPipe = window.pipe,
+	__pipeInst = window.pipe = function( dependencies, passive ) {
+		if ( !Array.isArray( dependencies ) ) return false;
+		
+		var __chainHead = ___CREATE_PIPE( dependencies, !passive );
+		__chainHead.pipe = ___CREATE_PIPE_CHAIN( __chainHead );
+		return __chainHead;
+	};
+	
+	
+	
+	// INFO: Extensions
 	(function(){
-		window.pipe = window.pipe || function( dependencies, passive ) {
-			if ( !Array.isArray( dependencies ) ) return false;
-			
-			var __chainHead = ___CREATE_PIPE( dependencies, !passive );
-			__chainHead.pipe = ___CREATE_PIPE_CHAIN( __chainHead );
-			return __chainHead;
+		__pipeInst.passive		= function( dependencies ){
+			return __pipeInst( dependencies, true );
 		};
-		
-		window.pipe.passive = function( dependencies ){
-			return window.pipe( dependencies, true );
-		};
-		
-		window.pipe.loadResource = window.pipe.loadResource || function( resList, immediate ){
+		__pipeInst.loadResource = function( resList, immediate ){
 			return ___RESOURCE_FETCHER( resList, arguments.length > 1 ? !!immediate : true );
 		};
 	})();
-
-	// pipe.components
 	(function(){
 		var __compBasePath = './components';
-
-		window.pipe.components = window.pipe.components || function( components ) {
+	
+		__pipeInst.components	= function( components ){
+	
 			if ( !Array.isArray( components ) ) return false;
 
 			var __promiseGenerator, __promise = Promise.resolve(), __promises = [];
@@ -64,14 +66,14 @@
 				return Promise.all( promiseQueue );
 			});
 		};
-
-		window.pipe.components.base_path = function( path ){
+		__pipeInst.components.base_path = function( path ){
 			__compBasePath = path || './components';
 		};
 	})();
 	
 	
 
+	// INFO: Kernel APIs
 	function ___LOAD_COMPONENT( componentName, basePath, anchor ) {
 
 		basePath = basePath || './components';
