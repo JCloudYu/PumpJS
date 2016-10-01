@@ -89,18 +89,18 @@
 				scripts = [], styles = [],
 				comps	 = descriptor[ 'components' ] || [],
 				basePromise = (new Promise(function(fulfill){ trigger = fulfill; })),
-				waitedPromises = [];
+				earlyPool = [], laterPool = [];
 
 
 
 				comps.forEach(function( comp ) {
 					var fPath, async = (comp.hasOwnProperty('async') ? !!comp.async : true),
-					caching = comp.hasOwnProperty( 'cache' ) ? !!comp[ 'cache' ] : true,
-					targetAnchor = !!comp['anchor'] ? comp['anchor'] : anchor;
+					caching = comp.hasOwnProperty( 'cache' ) ? !!comp.cache : true,
+					targetAnchor = !!comp.anchor ? comp.anchor : anchor;
 					
 					
 					// Load view
-					if ( comp[ 'view' ] ) {
+					if ( comp.view ) {
 					
 						promiseGenerator = (function( fPath, anchor, cache ){
 							return function() {
@@ -116,17 +116,17 @@
 									}, 'text').fail(failure);
 								});
 							}
-						})( modulePath + comp['view'], targetAnchor, caching );
+						})( modulePath + comp.view, targetAnchor, caching );
 					
 						if ( !async )
 							basePromise = basePromise.then(promiseGenerator);
 						else
-							waitedPromises.push(promiseGenerator);
+							earlyPool.push(promiseGenerator);
 					}
 					
 					// Load css
-					if ( comp['style'] ) {
-						fPath = modulePath + comp['style'] + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
+					if ( comp.style ) {
+						fPath = modulePath + comp.style + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
 						if ( $.inArray( fPath, styles ) < 0 )
 						{
 							promiseGenerator = (function( fPath, anchor ){
@@ -137,51 +137,52 @@
 							if ( !async )
 								basePromise = basePromise.then(promiseGenerator);
 							else
-								waitedPromises.push(promiseGenerator);
+								earlyPool.push(promiseGenerator);
 						}
 					}
 
 					// Load js
-					if ( comp['script'] ) {
+					if ( comp.script ) {
 					
-						if ( !comp[ 'modulize' ] )
+						if ( !comp.modulize )
 						{
-							fPath = modulePath + comp['script'] + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
+							fPath = modulePath + comp.script + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
 							if ( $.inArray( fPath, scripts ) < 0 )
 							{
 								promiseGenerator = (function( fPath, anchor ){
-									return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true, !!comp['important'] ); };
+									return function(){ return ___LOAD_RESOURCE( fPath, 'js', anchor, true, !!comp.important ); };
 								})( fPath, targetAnchor );
 								
 								scripts.push( fPath );
-								
-								
-								if ( !async )
-									basePromise = basePromise.then(promiseGenerator);
-								else
-									waitedPromises.push(promiseGenerator);
 							}
 						}
 						else
 						{
 							promiseGenerator = (function( fPath, cache ){
-								return function(){ return ___LOAD_MODULE( fPath + ( cache ? '' : '?' + (((new Date()).getTime() / 1000) | 0) ), null, !!comp['important'] ); }
-							})( modulePath + comp['script'], caching );
-							
-							if ( !async )
-								basePromise = basePromise.then(promiseGenerator);
-							else
-								waitedPromises.push(promiseGenerator);
+								return function(){ return ___LOAD_MODULE( fPath + ( cache ? '' : '?' + (((new Date()).getTime() / 1000) | 0) ), null, !!comp.important ); }
+							})( modulePath + comp.script, caching );
 						}
+						
+						
+						if ( !async )
+							basePromise = basePromise.then(promiseGenerator);
+						else
+							(!!comp.view ? laterPool : earlyPool).push(promiseGenerator);
 					}
 				});
 				
-				if ( waitedPromises.length == 0 ) waitedPromises.push(function(){ return new Promise(function(fulfill){ fulfill(); }); });
+				if ( earlyPool.length == 0 ) earlyPool.push(function(){ return Promise.resolve(); });
+				if ( laterPool.length == 0 ) laterPool.push(function(){ return Promise.resolve(); });
 
 
 				basePromise.then(function(){
 					var promises = [];
-					waitedPromises.forEach(function(initiator){ promises.push( initiator() ); });
+					earlyPool.forEach(function(initiator){ promises.push( initiator() ); });
+					return Promise.all(promises);
+				})
+				.then(function(){
+					var promises = [];
+					laterPool.forEach(function(initiator){ promises.push( initiator() ); });
 					return Promise.all(promises);
 				}).then( fulfill ).catch( reject );
 				
