@@ -6,6 +6,8 @@
 		{ path:'../pipe.js', type:'js' }
 	])
 	.then(function(){
+		pipe.__CSS_USE_SPECIAL_TREATMENT = true;
+	
 		pipe([
 			'https://api.purimize.com/cache/lib/js/jquery,moment,moment-timezone-small/_.js'
 		])

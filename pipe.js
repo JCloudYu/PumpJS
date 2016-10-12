@@ -202,10 +202,15 @@
 			switch ( type )
 			{
 				case "css":
-					tag = document.createElement( 'link' );
-					tag.rel = "stylesheet";
-					tag.type = "text/css";
-					tag.href = src;
+					if ( !!__pipeInst.__CSS_USE_SPECIAL_TREATMENT )
+						ajax = true;
+					else
+					{
+						tag = document.createElement( 'link' );
+						tag.rel = "stylesheet";
+						tag.type = "text/css";
+						tag.href = src;
+					}
 					break;
 
 				case "js":
@@ -250,8 +255,11 @@
 			}
 			else
 			{
-				$.get( src, function( htmlText ) {
-					$( htmlText ).each(function(idx, tag) {
+				$.get( src, function( context ) {
+					if ( type == "css" )
+						context = "<style>" + context + "</style>";
+				
+					$( context ).each(function(idx, tag) {
 						if ( late )
 							setTimeout(function(){ target.insertBefore( tag, anchor ); }, 0);
 						else
