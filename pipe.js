@@ -94,14 +94,16 @@
 
 
 				comps.forEach(function( comp ) {
-					var fPath, async = (comp.hasOwnProperty('async') ? !!comp.async : true),
+					var fPath,
+					async	= (comp.hasOwnProperty('async') ? !!comp.async : true),
 					caching = comp.hasOwnProperty( 'cache' ) ? !!comp.cache : true,
 					targetAnchor = !!comp.anchor ? comp.anchor : anchor;
 					
 					
 					// Load view
+					comp.view = comp.html || comp.view;
 					if ( comp.view ) {
-					
+						
 						promiseGenerator = (function( fPath, anchor, cache ){
 							return function() {
 								return new Promise(function(complete, failure) {
@@ -124,7 +126,10 @@
 							earlyPool.push(promiseGenerator);
 					}
 					
+					
+					
 					// Load css
+					comp.style = comp.css || comp.style;
 					if ( comp.style ) {
 						fPath = modulePath + comp.style + ( caching ? '' : '?' + (((new Date()).getTime() / 1000) | 0) );
 						if ( $.inArray( fPath, styles ) < 0 )
@@ -141,7 +146,10 @@
 						}
 					}
 
+
+
 					// Load js
+					comp.script = comp.js || comp.script;
 					if ( comp.script ) {
 					
 						if ( !comp.modulize )
