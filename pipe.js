@@ -175,7 +175,7 @@
 						if ( !async )
 							basePromise = basePromise.then(promiseGenerator);
 						else
-							(!!comp.view ? laterPool : earlyPool).push(promiseGenerator);
+							laterPool.push(promiseGenerator);
 					}
 				});
 				
