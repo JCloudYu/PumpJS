@@ -230,6 +230,14 @@
 				case "html":
 					ajax = true;
 					break;
+				
+				case "img":
+					anchor = false;
+					tag = new Image();
+					tag.src = src;
+					tag.onload  = fulfill;
+					tag.onerror = processErr;
+					return;
 
 				default:
 					return null;
